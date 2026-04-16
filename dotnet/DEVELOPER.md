@@ -40,6 +40,20 @@ dotnet run --project .\RenPyAutoTranslate.Wpf\RenPyAutoTranslate.Wpf.csproj -c R
 
 ---
 
+## CI (GitHub Actions)
+
+On every **push** to any branch, and on **pull requests** into **`main`**, [`.github/workflows/dotnet-ci.yml`](../.github/workflows/dotnet-ci.yml) runs **`dotnet test`** on **RenPyAutoTranslate.Core.Tests** (Ubuntu; the WPF project is not built in CI).
+
+### Restricting who can push to `main`
+
+Branch protection is configured in the **GitHub** UI, not in this repo:
+
+1. Open the repository on GitHub → **Settings** → **Branches** → **Add branch protection rule** (or edit an existing rule) for **`main`**.
+2. Enable **Restrict who can push to matching branches** and add **only your GitHub user** (and any bots you trust, if needed). Other collaborators must land changes via pull requests from other branches.
+3. Optional: enable **Require status checks to pass before merging** and select the **.NET CI** workflow so `main` only moves forward when tests pass.
+
+---
+
 ## Publish (release binary)
 
 ### Default: self-contained (`publish.ps1`)
