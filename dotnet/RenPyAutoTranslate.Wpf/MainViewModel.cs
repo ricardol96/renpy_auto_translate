@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -26,22 +27,31 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _outputPreview = "—";
     [ObservableProperty] private string _sourceIso = "en";
     [ObservableProperty] private int _workers = 4;
-    [ObservableProperty] private string _progressCount = "—";
     [ObservableProperty] private string _lastFile = "";
     [ObservableProperty] private double _progressMaximum = 1;
     [ObservableProperty] private double _progressValue;
-    [ObservableProperty] private string _logText = "";
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private AppTheme _uiTheme = AppTheme.System;
+    [ObservableProperty] private string _statusTitle = "Ready to translate";
+    [ObservableProperty] private string _statusSubtitle = "";
 
     public AppTheme[] ThemeOptions { get; } = { AppTheme.System, AppTheme.Light, AppTheme.Dark };
 
     public ObservableCollection<LanguageOptionViewModel> LanguageOptions { get; } = new();
+    public ObservableCollection<LogLineViewModel> LogLines { get; } = new();
+
+    public string ThemeDisplayLabel => UiTheme switch
+    {
+        AppTheme.Dark => "Dark · Fluent",
+        AppTheme.Light => "Light · Fluent",
+        _ => "System · Fluent"
+    };
 
     partial void OnUiThemeChanged(AppTheme value)
     {
         ThemeApplier.Apply(value);
         _ = PersistThemeAsync();
+        OnPropertyChanged(nameof(ThemeDisplayLabel));
     }
 
     private async Task PersistThemeAsync()
@@ -79,18 +89,38 @@ public partial class MainViewModel : ObservableObject
                 /* ignore invalid saved path */
             }
         }
+
+        UpdateIdleStatus();
+    }
+
+    private void LanguageOptionOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(LanguageOptionViewModel.IsSelected))
+            UpdateIdleStatus();
     }
 
     private void RefreshLanguageFolders(string tlRoot)
     {
+        foreach (var opt in LanguageOptions)
+            opt.PropertyChanged -= LanguageOptionOnPropertyChanged;
         LanguageOptions.Clear();
         if (!Directory.Exists(tlRoot))
+        {
+            UpdateIdleStatus();
             return;
+        }
+
         foreach (var name in Directory.GetDirectories(tlRoot)
                      .Select(Path.GetFileName)
                      .Where(n => !string.IsNullOrEmpty(n) && !n!.StartsWith('.'))
                      .OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
-            LanguageOptions.Add(new LanguageOptionViewModel { FolderName = name! });
+        {
+            var opt = new LanguageOptionViewModel { FolderName = name! };
+            opt.PropertyChanged += LanguageOptionOnPropertyChanged;
+            LanguageOptions.Add(opt);
+        }
+
+        UpdateIdleStatus();
     }
 
     private void ApplySavedLanguageSelection(AppSettings s)
@@ -107,6 +137,15 @@ public partial class MainViewModel : ObservableObject
             return;
         foreach (var opt in LanguageOptions)
             opt.IsSelected = string.Equals(opt.FolderName, s.LastLanguageFolder, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void UpdateIdleStatus()
+    {
+        if (IsBusy)
+            return;
+        StatusTitle = "Ready to translate";
+        var n = LanguageOptions.Count(o => o.IsSelected);
+        StatusSubtitle = n == 0 ? "No languages selected" : $"{n} language(s) selected";
     }
 
     [RelayCommand]
@@ -171,6 +210,54 @@ public partial class MainViewModel : ObservableObject
         Process.Start(new ProcessStartInfo { FileName = OutputPreview, UseShellExecute = true });
     }
 
+    private static LogLineDisplayKind ClassifyDisplayKind(string level, string line)
+    {
+        if (string.Equals(level, "ERROR", StringComparison.OrdinalIgnoreCase))
+            return LogLineDisplayKind.Error;
+        if (line.StartsWith("=====", StringComparison.Ordinal))
+            return LogLineDisplayKind.Accent;
+        if (line.Contains("FAILED", StringComparison.OrdinalIgnoreCase))
+            return LogLineDisplayKind.Error;
+        if (line.Contains("] OK ", StringComparison.Ordinal))
+            return LogLineDisplayKind.Success;
+        if (line.Contains("throttling", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("429", StringComparison.Ordinal)
+            || line.Contains("spacing requests", StringComparison.OrdinalIgnoreCase))
+            return LogLineDisplayKind.Warn;
+        return LogLineDisplayKind.Info;
+    }
+
+    private void AppendLog(string level, string msg)
+    {
+        var ts = DateTime.Now.ToString("HH:mm:ss");
+        var lines = msg.Replace("\r\n", "\n").Split('\n');
+        foreach (var raw in lines)
+        {
+            var line = raw;
+            if (line.Length == 0)
+                continue;
+            var kind = ClassifyDisplayKind(level, line);
+            var levelLabel = level.Trim().ToUpperInvariant();
+            if (levelLabel.Length > 5)
+                levelLabel = levelLabel[..5];
+            AddLogLine(new LogLineViewModel(ts, levelLabel, line, kind));
+        }
+    }
+
+    private void AddLogLine(LogLineViewModel line)
+    {
+        var app = Application.Current;
+        void Add()
+        {
+            LogLines.Add(line);
+        }
+
+        if (app?.Dispatcher.CheckAccess() == true)
+            Add();
+        else
+            app?.Dispatcher.Invoke(Add, DispatcherPriority.Background);
+    }
+
     private async Task RunAsync(bool resume)
     {
         if (IsBusy)
@@ -226,10 +313,9 @@ public partial class MainViewModel : ObservableObject
 
         _runCts = new CancellationTokenSource();
         IsBusy = true;
-        LogText = "";
+        LogLines.Clear();
         ProgressValue = 0;
         ProgressMaximum = 1;
-        ProgressCount = "…";
         LastFile = "";
 
         var toolRoot = RenpyPaths.ToolRepoRootFromBaseDirectory();
@@ -239,15 +325,15 @@ public partial class MainViewModel : ObservableObject
         await using var logFile = new StreamWriter(sessionLog, false, new System.Text.UTF8Encoding(false));
         var logFileLock = new object();
 
-        void AppendLog(string level, string msg)
+        void AppendLogFile(string level, string msg)
         {
             var ts = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            var line = $"{ts} | {level,-8} | {msg}\n";
+            var fileLine = $"{ts} | {level,-8} | {msg}\n";
             lock (logFileLock)
             {
                 try
                 {
-                    logFile.Write(line);
+                    logFile.Write(fileLine);
                     logFile.Flush();
                 }
                 catch
@@ -256,17 +342,13 @@ public partial class MainViewModel : ObservableObject
                 }
             }
 
-            var app = Application.Current;
-            if (app?.Dispatcher.CheckAccess() == true)
-                LogText += line;
-            else
-                app?.Dispatcher.Invoke(() => LogText += line, DispatcherPriority.Background);
+            AppendLog(level, msg);
         }
 
         try
         {
             var langNames = string.Join(", ", selectedOpts.Select(o => o.FolderName));
-            AppendLog("INFO",
+            AppendLogFile("INFO",
                 $"Source TL (read): {tlRoot}\nOutput TL (write): {outputRoot}\nLanguages ({selectedOpts.Count}): {langNames}\nSource ISO: {source}\n---");
 
             Directory.CreateDirectory(outputRoot);
@@ -283,13 +365,23 @@ public partial class MainViewModel : ObservableObject
                 langIndex++;
                 var langFolder = opt.FolderName;
 
-                AppendLog("INFO", $"===== Language {langIndex}/{totalLangs}: {langFolder} =====");
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    StatusTitle = $"• {langFolder} in progress";
+                    StatusSubtitle = "…";
+                });
+
+                AppendLogFile("INFO", $"===== Language {langIndex}/{totalLangs}: {langFolder} =====");
 
                 var progress = new Progress<TranslationProgress>(p =>
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    var disp = Application.Current?.Dispatcher;
+                    if (disp is null)
+                        return;
+                    disp.Invoke(() =>
                     {
-                        ProgressCount = $"[{langIndex}/{totalLangs}] {langFolder}: {p.Completed} / {p.Total}";
+                        StatusTitle = $"• {langFolder} in progress";
+                        StatusSubtitle = $"{p.Completed:N0} / {p.Total:N0}";
                         ProgressValue = p.Completed;
                         ProgressMaximum = Math.Max(1, p.Total);
                         LastFile = string.IsNullOrEmpty(p.LastRelativePath)
@@ -306,7 +398,7 @@ public partial class MainViewModel : ObservableObject
                     resume,
                     w,
                     progress,
-                    AppendLog,
+                    AppendLogFile,
                     _runCts.Token).ConfigureAwait(true);
 
                 if (result is null)
@@ -317,7 +409,7 @@ public partial class MainViewModel : ObservableObject
                 sumTotal += result.Value.Total;
             }
 
-            AppendLog("INFO", "Done (all selected languages).");
+            AppendLogFile("INFO", "Done (all selected languages).");
 
             var s = await _settingsStore.LoadAsync().ConfigureAwait(true);
             s.LastSourceTlPath = tlRoot;
@@ -336,11 +428,11 @@ public partial class MainViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            AppendLog("INFO", "Cancelled.");
+            AppendLogFile("INFO", "Cancelled.");
         }
         catch (Exception ex)
         {
-            AppendLog("ERROR", ex.ToString());
+            AppendLogFile("ERROR", ex.ToString());
             MessageBox.Show(
                 $"{ex.Message}\n\n(Full details in the log.)\n\nLog file:\n{sessionLog}",
                 "Translation error",
@@ -350,12 +442,12 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             IsBusy = false;
-            ProgressCount = "—";
             LastFile = "";
             ProgressValue = 0;
             ProgressMaximum = 1;
             _runCts?.Dispose();
             _runCts = null;
+            UpdateIdleStatus();
         }
     }
 

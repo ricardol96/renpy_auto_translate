@@ -1,0 +1,33 @@
+# Runs Core unit tests on every push and on PRs targeting main.
+# (WPF is not built here; Core.Tests targets net8.0 and runs on Linux.)
+name: .NET CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dotnet
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Test (Core)
+        run: dotnet test RenPyAutoTranslate.Core.Tests/RenPyAutoTranslate.Core.Tests.csproj -c Release --verbosity normal
