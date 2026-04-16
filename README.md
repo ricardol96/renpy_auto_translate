@@ -59,3 +59,9 @@ Your translated files appear in a folder **next to the program**, named after yo
 ## If Windows blocks the app
 
 You may see “Windows protected your PC.” Choose **More info**, then **Run anyway**. That’s normal for tools that aren’t signed in the Microsoft Store.
+
+---
+
+**License:** [MIT](LICENSE).
+
+**Developers:** build and architecture notes live in [`dotnet/DEVELOPER.md`](dotnet/DEVELOPER.md).
