@@ -42,18 +42,23 @@ dotnet run --project .\RenPyAutoTranslate.Wpf\RenPyAutoTranslate.Wpf.csproj -c R
 
 ## Publish (release binary)
 
-**`publish.ps1`** produces a **single-file, self-contained `win-x64`** executable. Output is written to **`PublishDir`** in `RenPyAutoTranslate.Wpf.csproj`, which points at the **repository root**. The script strips symbols (`DebugType=None`, `DebugSymbols=false`) and deletes extra `RenPyAutoTranslate.*` artifacts at the root so only **`RenPyAutoTranslate.exe`** remains; it also removes a legacy **`publish\`** folder if present.
+### Default: self-contained (`publish.ps1`)
 
-Equivalent inline command (see script for the full set of properties):
+**`publish.ps1`** produces a **single-file, self-contained `win-x64`** executable. The bundle embeds the .NET runtime, so the file is large (often well over 100 MB before compression). **`EnableCompressionInSingleFile=true`** is enabled to shrink the on-disk size (self-contained only; see [single-file bundling](https://learn.microsoft.com/dotnet/core/deploying/single-file/overview)).
 
-```powershell
-dotnet publish .\RenPyAutoTranslate.Wpf\RenPyAutoTranslate.Wpf.csproj `
-  -c Release -r win-x64 --self-contained true `
-  -p:PublishSingleFile=true `
-  -p:IncludeNativeLibrariesForSelfExtract=true
-```
+Output is written to **`PublishDir`** in `RenPyAutoTranslate.Wpf.csproj` (**repository root**). The script strips symbols and removes extra `RenPyAutoTranslate.*` artifacts so only **`RenPyAutoTranslate.exe`** remains; it also deletes a legacy **`publish\`** folder if present.
 
-Close a running instance of the app before publishing, or MSBuild may fail copying referenced assemblies.
+Close a running instance of the app before publishing, or MSBuild may fail copying or overwriting the output.
+
+### Smaller EXE: framework-dependent (`publish-framework-dependent.ps1`)
+
+For a **much smaller** `RenPyAutoTranslate.exe` (typically a few MB or less—suitable for GitHub without LFS), use **`publish-framework-dependent.ps1`**. It publishes **`--self-contained false`**: the [.NET 8 **Desktop** Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/8.0) must be installed on the target PC (“run desktop apps”). Compression is **not** applied here because the SDK only supports bundle compression for self-contained apps (`NETSDK1176`).
+
+Distribute the runtime installer alongside your build if your users may not have .NET installed.
+
+### Git and large binaries
+
+Do **not** commit the self-contained `.exe` to Git: it often exceeds GitHub’s **100 MB** per-file limit. Keep `/RenPyAutoTranslate.exe` gitignored, use **GitHub Releases**, **Git LFS**, or ship the **framework-dependent** build instead. If a large file was already pushed, remove it from history (e.g. [`git filter-repo`](https://github.com/newren/git-filter-repo) or BFG) before pushing again.
 
 ---
 
