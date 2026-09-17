@@ -26,8 +26,6 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _detectedGame = "—";
     [ObservableProperty] private string _outputPreview = "—";
     [ObservableProperty] private string _sourceIso = "en";
-    [ObservableProperty] private int _workers = 4;
-    [ObservableProperty] private string _workersText = "4";
     [ObservableProperty] private string _lastFile = "";
     [ObservableProperty] private double _progressMaximum = 1;
     [ObservableProperty] private double _progressValue;
@@ -36,40 +34,27 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _statusTitle = "Ready to translate";
     [ObservableProperty] private string _statusSubtitle = "";
 
-    public AppTheme[] ThemeOptions { get; } = { AppTheme.System, AppTheme.Light, AppTheme.Dark };
+    public IReadOnlyList<SourceLanguageOption> SourceLanguageOptions { get; } = LanguageNames.Map
+        .GroupBy(pair => pair.Value, StringComparer.OrdinalIgnoreCase)
+        .Select(group => new SourceLanguageOption(group.Key, group.First().Key))
+        .OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase)
+        .ToList();
 
     public ObservableCollection<LanguageOptionViewModel> LanguageOptions { get; } = new();
     public ObservableCollection<LogLineViewModel> LogLines { get; } = new();
 
-    public string ThemeDisplayLabel => UiTheme switch
-    {
-        AppTheme.Dark => "Dark · Fluent",
-        AppTheme.Light => "Light · Fluent",
-        _ => "System · Fluent"
-    };
+    public string ThemeIconPath => UiTheme == AppTheme.Dark
+        ? "M 8 1 L 8 3 M 8 13 L 8 15 M 1 8 L 3 8 M 13 8 L 15 8 M 3 3 L 4.5 4.5 M 11.5 11.5 L 13 13 M 13 3 L 11.5 4.5 M 4.5 11.5 L 3 13 M 8 4 A 4 4 0 1 0 8 12 A 4 4 0 1 0 8 4"
+        : "M 11.5 2.5 A 6 6 0 1 0 13.5 12.5 A 5 5 0 1 1 11.5 2.5";
 
-    partial void OnWorkersChanged(int value)
-    {
-        var s = value.ToString();
-        if (!string.Equals(WorkersText, s, StringComparison.Ordinal))
-            WorkersText = s;
-    }
-
-    partial void OnWorkersTextChanged(string value)
-    {
-        if (int.TryParse(value, out var parsed))
-        {
-            parsed = Math.Clamp(parsed, 1, 16);
-            if (Workers != parsed)
-                Workers = parsed;
-        }
-    }
+    public string ThemeToolTip => UiTheme == AppTheme.Dark ? "Use light theme" : "Use dark theme";
 
     partial void OnUiThemeChanged(AppTheme value)
     {
         ThemeApplier.Apply(value);
         _ = PersistThemeAsync();
-        OnPropertyChanged(nameof(ThemeDisplayLabel));
+        OnPropertyChanged(nameof(ThemeIconPath));
+        OnPropertyChanged(nameof(ThemeToolTip));
     }
 
     private async Task PersistThemeAsync()
@@ -91,8 +76,6 @@ public partial class MainViewModel : ObservableObject
         var s = await _settingsStore.LoadAsync().ConfigureAwait(true);
         SourceTlPath = s.LastSourceTlPath ?? "";
         SourceIso = s.SourceLanguageIso;
-        Workers = Math.Clamp(s.Workers, 1, 16);
-        WorkersText = Workers.ToString();
         UiTheme = s.Theme;
         if (!string.IsNullOrEmpty(SourceTlPath) && Directory.Exists(SourceTlPath))
         {
@@ -134,6 +117,9 @@ public partial class MainViewModel : ObservableObject
                      .Where(n => !string.IsNullOrEmpty(n) && !n!.StartsWith('.'))
                      .OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
         {
+            if (!LanguageNames.TryGetIso(name!, out _))
+                continue;
+
             var opt = new LanguageOptionViewModel { FolderName = name! };
             opt.PropertyChanged += LanguageOptionOnPropertyChanged;
             LanguageOptions.Add(opt);
@@ -164,7 +150,12 @@ public partial class MainViewModel : ObservableObject
             return;
         StatusTitle = "Ready to translate";
         var n = LanguageOptions.Count(o => o.IsSelected);
-        StatusSubtitle = n == 0 ? "No languages selected" : $"{n} language(s) selected";
+        StatusSubtitle = n switch
+        {
+            0 => "No languages selected",
+            1 => "1 language selected",
+            _ => $"{n} languages selected"
+        };
     }
 
     [RelayCommand]
@@ -211,6 +202,9 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void CancelRun() => _runCts?.Cancel();
+
+    [RelayCommand]
+    private void ToggleTheme() => UiTheme = UiTheme == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark;
 
     [RelayCommand]
     private void OpenLogsFolder()
@@ -320,15 +314,14 @@ public partial class MainViewModel : ObservableObject
         }
 
         var source = SourceIso.Trim().ToLowerInvariant();
-        if (string.IsNullOrEmpty(source))
+        if (!SourceLanguageOptions.Any(option => string.Equals(option.Iso, source, StringComparison.OrdinalIgnoreCase)))
         {
-            MessageBox.Show("Enter a source language code (e.g. en).", "Source language", MessageBoxButton.OK,
+            MessageBox.Show("Choose a supported source language.", "Source language", MessageBoxButton.OK,
                 MessageBoxImage.Error);
             return;
         }
 
-        var w = Math.Clamp(Workers, 1, 16);
-        Workers = w;
+        const int workers = 4;
 
         _runCts = new CancellationTokenSource();
         IsBusy = true;
@@ -415,7 +408,7 @@ public partial class MainViewModel : ObservableObject
                     outputRoot,
                     source,
                     resume,
-                    w,
+                    workers,
                     progress,
                     AppendLogFile,
                     _runCts.Token).ConfigureAwait(true);
@@ -435,7 +428,6 @@ public partial class MainViewModel : ObservableObject
             s.LastLanguageFolder = selectedOpts[^1].FolderName;
             s.LastLanguageFolders = selectedOpts.Select(o => o.FolderName).ToList();
             s.SourceLanguageIso = source;
-            s.Workers = w;
             s.Theme = UiTheme;
             await _settingsStore.SaveAsync(s).ConfigureAwait(true);
 

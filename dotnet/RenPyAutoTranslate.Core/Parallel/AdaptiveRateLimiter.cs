@@ -6,7 +6,9 @@ namespace RenPyAutoTranslate.Core.Parallel;
 public sealed class AdaptiveRateLimiter
 {
     private readonly double _ceiling;
+    private readonly double _floor;
     private readonly double _firstBump;
+    private readonly double _jitter;
     private readonly Action<string>? _onAdjust;
     private readonly SemaphoreSlim _mutex = new(1, 1);
     private double _nextAllowed;
@@ -16,12 +18,17 @@ public sealed class AdaptiveRateLimiter
     private static double MonotonicNow() => Monotonic.Elapsed.TotalSeconds;
 
     public AdaptiveRateLimiter(
-        double ceilingSec = 8.0,
-        double firstBumpSec = 0.05,
+        double ceilingSec = 30.0,
+        double firstBumpSec = 0.75,
+        double minimumIntervalSec = 0.25,
+        double jitterSec = 0.15,
         Action<string>? onAdjust = null)
     {
-        _ceiling = Math.Max(0.05, ceilingSec);
+        _floor = Math.Max(0.05, minimumIntervalSec);
+        _ceiling = Math.Max(_floor, ceilingSec);
         _firstBump = Math.Max(0.0, firstBumpSec);
+        _jitter = Math.Max(0.0, jitterSec);
+        _interval = _firstBump;
         _onAdjust = onAdjust;
     }
 
@@ -39,7 +46,8 @@ public sealed class AdaptiveRateLimiter
                 now = MonotonicNow();
             }
 
-            _nextAllowed = now + interval;
+            // Positive jitter avoids synchronized, machine-like request timing without exceeding the rate cap.
+            _nextAllowed = now + interval + Random.Shared.NextDouble() * _jitter;
         }
         finally
         {
@@ -54,9 +62,7 @@ public sealed class AdaptiveRateLimiter
         {
             if (_interval <= 0)
                 return;
-            _interval = Math.Max(0.0, _interval * 0.992);
-            if (_interval < 0.001)
-                _interval = 0.0;
+            _interval = Math.Max(_floor, _interval * 0.995);
         }
         finally
         {
@@ -73,7 +79,7 @@ public sealed class AdaptiveRateLimiter
             if (_interval <= 0)
                 _interval = _firstBump;
             else
-                _interval = Math.Min(_interval * 1.85, _ceiling);
+                _interval = Math.Min(_interval * 2.0, _ceiling);
             if (_interval > old && _onAdjust is not null)
             {
                 var ms = _interval * 1000.0;

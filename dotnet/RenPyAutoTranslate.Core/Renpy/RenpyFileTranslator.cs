@@ -1,4 +1,5 @@
 using System.Text;
+using RenPyAutoTranslate.Core.Parallel;
 using RenPyAutoTranslate.Core.Translation;
 
 namespace RenPyAutoTranslate.Core.Renpy;
@@ -24,7 +25,8 @@ public sealed class RenpyFileTranslator
         string outputRoot,
         string fromL,
         string toL,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        AdaptiveRateLimiter? limiter = null)
     {
         tlRoot = Path.GetFullPath(tlRoot);
         outputRoot = Path.GetFullPath(outputRoot);
@@ -89,9 +91,9 @@ public sealed class RenpyFileTranslator
                     {
                         await writer.WriteLineAsync(line).ConfigureAwait(false);
                         var spk = await TranslateWithBracketProtectionAsync(
-                            pair.Value.Speaker, fromL, toL, cancellationToken).ConfigureAwait(false);
+                            pair.Value.Speaker, fromL, toL, cancellationToken, limiter).ConfigureAwait(false);
                         var dlg = await TranslateWithBracketProtectionAsync(
-                            pair.Value.Dialogue, fromL, toL, cancellationToken).ConfigureAwait(false);
+                            pair.Value.Dialogue, fromL, toL, cancellationToken, limiter).ConfigureAwait(false);
                         pending = new Pending(PendingKind.Double, null, spk, dlg);
                         continue;
                     }
@@ -101,7 +103,7 @@ public sealed class RenpyFileTranslator
                     {
                         await writer.WriteLineAsync(line).ConfigureAwait(false);
                         var tr = await TranslateWithBracketProtectionAsync(
-                            lineToTranslate, fromL, toL, cancellationToken).ConfigureAwait(false);
+                            lineToTranslate, fromL, toL, cancellationToken, limiter).ConfigureAwait(false);
                         pending = new Pending(PendingKind.Single, tr, null, null);
                         continue;
                     }
@@ -142,12 +144,28 @@ public sealed class RenpyFileTranslator
         string text,
         string fromL,
         string toL,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        AdaptiveRateLimiter? limiter)
     {
         var masked = RenpyInterpolationProtector.MaskBracketInterpolations(text, out var originals);
-        var translated = await _provider
-            .TranslateAsync(masked, fromL, toL, cancellationToken)
-            .ConfigureAwait(false);
+        if (limiter is not null)
+            await limiter.AcquireAsync(cancellationToken).ConfigureAwait(false);
+
+        string translated;
+        try
+        {
+            translated = await _provider
+                .TranslateAsync(masked, fromL, toL, cancellationToken)
+                .ConfigureAwait(false);
+            if (limiter is not null)
+                await limiter.RecordSuccessAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (limiter is not null && TranslationErrorClassifier.IsRateLimitError(ex))
+        {
+            await limiter.RecordThrottleAsync(cancellationToken).ConfigureAwait(false);
+            throw;
+        }
+
         return RenpyInterpolationProtector.UnmaskBracketInterpolations(translated, originals);
     }
 

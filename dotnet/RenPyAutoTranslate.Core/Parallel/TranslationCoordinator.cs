@@ -24,8 +24,8 @@ public sealed class TranslationCoordinator
         int maxWorkers,
         IProgress<TranslationProgress>? progress,
         Action<string, string>? onLog,
-        int maxRetries = 3,
-        double baseDelaySec = 0.5,
+        int maxRetries = 5,
+        double baseDelaySec = 1.0,
         CancellationToken cancellationToken = default)
     {
         void Log(string level, string msg) => onLog?.Invoke(level, msg);
@@ -101,13 +101,11 @@ public sealed class TranslationCoordinator
         Exception? last = null;
         for (var attempt = 0; attempt <= maxRetries; attempt++)
         {
-            await limiter.AcquireAsync(ct).ConfigureAwait(false);
             try
             {
                 await _translator
-                    .TranslateFileAsync(origin, tlRoot, outputRoot, fromL, toL, ct)
+                    .TranslateFileAsync(origin, tlRoot, outputRoot, fromL, toL, ct, limiter)
                     .ConfigureAwait(false);
-                await limiter.RecordSuccessAsync(ct).ConfigureAwait(false);
                 return;
             }
             catch (Exception exc) when (exc is HttpRequestException or TaskCanceledException or IOException
@@ -125,8 +123,6 @@ public sealed class TranslationCoordinator
 
             if (attempt < maxRetries)
             {
-                if (last is not null && TranslationErrorClassifier.IsRateLimitError(last))
-                    await limiter.RecordThrottleAsync(ct).ConfigureAwait(false);
                 var delay = baseDelaySec * Math.Pow(2, attempt) + Random.Shared.NextDouble() * 0.25;
                 await Task.Delay(TimeSpan.FromSeconds(delay), ct).ConfigureAwait(false);
             }
