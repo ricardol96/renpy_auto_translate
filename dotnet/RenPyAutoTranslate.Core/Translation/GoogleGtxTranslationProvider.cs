@@ -24,7 +24,9 @@ public sealed class GoogleGtxTranslationProvider : ITranslationProvider, IDispos
         string targetLang,
         CancellationToken cancellationToken = default)
     {
-        if (text.Length == 0)
+        // Google returns an empty result for whitespace-only strings. Preserve them
+        // verbatim because Ren'Py uses these strings for intentional spacing.
+        if (string.IsNullOrWhiteSpace(text))
             return text;
         var url =
             "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t" +

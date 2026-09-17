@@ -1,324 +1,118 @@
 <Window x:Class="RenPyAutoTranslate.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:RenPyAutoTranslate.Wpf.Converters"
         xmlns:local="clr-namespace:RenPyAutoTranslate.Wpf"
         xmlns:sys="clr-namespace:System.Windows.Controls;assembly=PresentationFramework"
-        mc:Ignorable="d"
-        Title="Ren'Py Auto Translate"
-        Height="640" Width="1000" MinWidth="760" MinHeight="480"
-        WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource WindowBackgroundBrush}"
-        Foreground="{DynamicResource WindowForegroundBrush}"
-        FontFamily="Segoe UI Variable, Segoe UI">
+        Title="Ren'Py Auto Translate" Height="720" Width="1120" MinWidth="860" MinHeight="580"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource WindowForegroundBrush}" FontFamily="Segoe UI Variable, Segoe UI">
   <Window.Resources>
     <conv:InvertBoolConverter x:Key="InvertBool" />
     <sys:BooleanToVisibilityConverter x:Key="BoolToVis" />
-
     <DataTemplate DataType="{x:Type local:LogLineViewModel}">
-      <Grid Margin="0,1">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="72" />
-          <ColumnDefinition Width="Auto" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0" Text="{Binding Timestamp}" FontFamily="Consolas, Cascadia Mono, Courier New"
-                   FontSize="11" Foreground="{DynamicResource LogTimestampBrush}" VerticalAlignment="Top" />
-        <TextBlock Grid.Column="1" Text=" " Width="4" />
-        <StackPanel Grid.Column="2" Orientation="Horizontal">
-          <TextBlock Text="✓ " FontSize="11" VerticalAlignment="Top" Margin="0,0,2,0" Visibility="Collapsed">
-            <TextBlock.Style>
-              <Style TargetType="TextBlock">
-                <Setter Property="Foreground" Value="{DynamicResource LogSuccessBrush}" />
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Success}">
-                    <Setter Property="Visibility" Value="Visible" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </TextBlock.Style>
-          </TextBlock>
-          <TextBlock Text="⚠ " FontSize="11" VerticalAlignment="Top" Margin="0,0,2,0" Visibility="Collapsed">
-            <TextBlock.Style>
-              <Style TargetType="TextBlock">
-                <Setter Property="Foreground" Value="{DynamicResource LogWarnBrush}" />
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Warn}">
-                    <Setter Property="Visibility" Value="Visible" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </TextBlock.Style>
-          </TextBlock>
-          <TextBlock Text="{Binding Message}" FontFamily="Consolas, Cascadia Mono, Courier New" FontSize="11"
-                     TextWrapping="Wrap" VerticalAlignment="Top">
-            <TextBlock.Style>
-              <Style TargetType="TextBlock">
-                <Setter Property="Foreground" Value="{DynamicResource LogInfoBrush}" />
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Warn}">
-                    <Setter Property="Foreground" Value="{DynamicResource LogWarnBrush}" />
-                  </DataTrigger>
-                  <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Error}">
-                    <Setter Property="Foreground" Value="{DynamicResource LogErrorBrush}" />
-                  </DataTrigger>
-                  <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Success}">
-                    <Setter Property="Foreground" Value="{DynamicResource LogSuccessBrush}" />
-                  </DataTrigger>
-                  <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Accent}">
-                    <Setter Property="Foreground" Value="{DynamicResource LogAccentBrush}" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </TextBlock.Style>
-          </TextBlock>
-        </StackPanel>
+      <Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="68" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+        <TextBlock Text="{Binding Timestamp}" FontFamily="Cascadia Mono, Consolas" FontSize="10" Foreground="{DynamicResource LogTimestampBrush}" VerticalAlignment="Top" />
+        <TextBlock Grid.Column="1" Text="{Binding Message}" FontFamily="Cascadia Mono, Consolas" FontSize="10.5" TextWrapping="Wrap" VerticalAlignment="Top">
+          <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource LogInfoBrush}" /><Style.Triggers>
+            <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Warn}"><Setter Property="Foreground" Value="{DynamicResource LogWarnBrush}" /></DataTrigger>
+            <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Error}"><Setter Property="Foreground" Value="{DynamicResource LogErrorBrush}" /></DataTrigger>
+            <DataTrigger Binding="{Binding Kind}" Value="{x:Static local:LogLineDisplayKind.Success}"><Setter Property="Foreground" Value="{DynamicResource LogSuccessBrush}" /></DataTrigger>
+          </Style.Triggers></Style></TextBlock.Style>
+        </TextBlock>
       </Grid>
     </DataTemplate>
   </Window.Resources>
 
-  <Grid Margin="20">
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="2*" MinWidth="300" />
-      <ColumnDefinition Width="16" />
-      <ColumnDefinition Width="3*" MinWidth="320" />
-    </Grid.ColumnDefinitions>
+  <Grid>
+    <Grid.RowDefinitions><RowDefinition Height="56" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+    <Border Grid.Row="0" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,0,0,1">
+      <Grid Margin="28,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="Ren'Py Auto Translate" FontSize="16" FontWeight="SemiBold" />
+          <Border Height="18" Width="1" Background="{DynamicResource GroupBoxBorderBrush}" Margin="14,0" />
+          <TextBlock Text="Translation workspace" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+        </StackPanel>
+        <ComboBox Grid.Column="1" Width="124" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding UiTheme, Mode=TwoWay}" Style="{StaticResource FluentComboBox}" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
 
-    <!-- Left: configuration -->
-    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel>
-        <TextBlock Text="Source" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" />
-        <TextBlock Text="TL folder" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,4" />
-        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}"
-                BorderThickness="1" CornerRadius="8" Padding="0" Margin="0,0,0,10">
-          <Grid>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            <TextBox Grid.Row="0" Text="{Binding SourceTlPath, Mode=OneWay}" IsReadOnly="True"
-                     BorderThickness="0" Background="Transparent" Padding="12,10"
-                     Style="{StaticResource FluentTextBox}" />
-            <Button Grid.Row="1" Content="Browse folder…" Command="{Binding BrowseTlCommand}"
-                    Style="{StaticResource FluentSecondaryButton}" HorizontalAlignment="Stretch" Margin="10,0,10,10"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" />
-          </Grid>
-        </Border>
-
-        <Border Margin="0,0,0,14" Padding="10,8" CornerRadius="20" HorizontalAlignment="Left"
-                Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource GroupBoxBorderBrush}"
-                BorderThickness="1">
-          <StackPanel Orientation="Horizontal">
-            <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
-              <Ellipse.Style>
-                <Style TargetType="Ellipse">
-                  <Setter Property="Fill" Value="{DynamicResource AccentBrush}" />
-                  <Style.Triggers>
-                    <DataTrigger Binding="{Binding DetectedGame}" Value="—">
-                      <Setter Property="Fill" Value="{DynamicResource TextMutedBrush}" />
-                    </DataTrigger>
-                  </Style.Triggers>
-                </Style>
-              </Ellipse.Style>
-            </Ellipse>
-            <TextBlock VerticalAlignment="Center" FontWeight="SemiBold">
-              <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                  <Setter Property="Text" Value="{Binding DetectedGame}" />
-                  <Style.Triggers>
-                    <DataTrigger Binding="{Binding DetectedGame}" Value="—">
-                      <Setter Property="Text" Value="No game detected" />
-                    </DataTrigger>
-                  </Style.Triggers>
-                </Style>
-              </TextBlock.Style>
-            </TextBlock>
-            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}"
-                       FontSize="12">
-              <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                  <Setter Property="Text" Value="• detected" />
-                  <Style.Triggers>
-                    <DataTrigger Binding="{Binding DetectedGame}" Value="—">
-                      <Setter Property="Visibility" Value="Collapsed" />
-                    </DataTrigger>
-                  </Style.Triggers>
-                </Style>
-              </TextBlock.Style>
-            </TextBlock>
-          </StackPanel>
-        </Border>
-
-        <TextBlock Text="Output TL (write)" FontWeight="SemiBold" Margin="0,0,0,4" />
-        <TextBlock Text="{Binding OutputPreview}" TextWrapping="Wrap" Foreground="{DynamicResource TextMutedBrush}"
-                   FontSize="12" Margin="0,0,0,16" />
-
-        <TextBlock Text="Translate into" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6" />
-        <TextBlock Text="Select one or more; runs in list order." Foreground="{DynamicResource TextMutedBrush}"
-                   FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8" />
-        <Border BorderBrush="{DynamicResource GroupBoxBorderBrush}" BorderThickness="1" CornerRadius="8"
-                MaxHeight="220" Padding="8" Background="{DynamicResource CardBackgroundBrush}">
-          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding LanguageOptions}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="{x:Type local:LanguageOptionViewModel}">
-                  <Border Margin="0,0,0,6" Padding="10,8" CornerRadius="8" BorderThickness="1.5">
-                    <Border.Style>
-                      <Style TargetType="Border">
-                        <Setter Property="BorderBrush" Value="{DynamicResource GroupBoxBorderBrush}" />
-                        <Setter Property="Background" Value="Transparent" />
-                        <Style.Triggers>
-                          <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
-                          </DataTrigger>
-                        </Style.Triggers>
-                      </Style>
-                    </Border.Style>
-                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                              IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InvertBool}}"
-                              Style="{StaticResource FluentCheckBox}">
-                      <Grid>
-                        <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="*" />
-                          <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding FolderName}" VerticalAlignment="Center"
-                                   FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="{Binding IsoLabel}" VerticalAlignment="Center"
-                                   Margin="12,0,0,0" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" />
-                      </Grid>
-                    </CheckBox>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
-        </Border>
-
-        <Grid Margin="0,16,0,0">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="12" />
-            <ColumnDefinition Width="*" />
-          </Grid.ColumnDefinitions>
-          <StackPanel Grid.Column="0">
-            <TextBlock Text="Source lang" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" Margin="0,0,0,4" />
-            <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource GroupBoxBorderBrush}"
-                    BorderThickness="1" CornerRadius="8">
-              <TextBox Text="{Binding SourceIso, UpdateSourceTrigger=PropertyChanged}"
-                       BorderThickness="0" Background="Transparent" Padding="10,8"
-                       Style="{StaticResource FluentTextBox}"
-                       IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" />
-            </Border>
-          </StackPanel>
-          <StackPanel Grid.Column="2">
-            <TextBlock Text="Workers" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" Margin="0,0,0,4" />
-            <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource GroupBoxBorderBrush}"
-                    BorderThickness="1" CornerRadius="8">
-              <TextBox Text="{Binding WorkersText, UpdateSourceTrigger=PropertyChanged}"
-                       BorderThickness="0" Background="Transparent" Padding="10,8"
-                       Style="{StaticResource FluentTextBox}"
-                       IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" />
-            </Border>
-          </StackPanel>
-        </Grid>
-
-        <TextBlock Text="Theme" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" Margin="0,14,0,4" />
-        <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding UiTheme, Mode=TwoWay}"
-                  Style="{StaticResource FluentComboBox}" />
+    <Grid Grid.Row="1" Margin="32,28">
+      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+      <StackPanel Grid.Row="0" Margin="0,0,0,24">
+        <TextBlock Text="Translate game files" FontSize="26" FontWeight="SemiBold" />
+        <TextBlock Text="Choose a Ren'Py translation folder, select target languages, then start a translation run." FontSize="13" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
       </StackPanel>
-    </ScrollViewer>
 
-    <!-- Right: run + log -->
-    <Grid Grid.Column="2">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" MinHeight="112" />
-        <RowDefinition Height="Auto" MinHeight="128" />
-        <RowDefinition Height="*" MinHeight="120" />
-        <RowDefinition Height="Auto" />
-      </Grid.RowDefinitions>
+      <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="1.18*" /><ColumnDefinition Width="24" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel>
+            <Border Style="{StaticResource SectionCard}" Margin="0,0,0,16">
+              <StackPanel>
+                <TextBlock Text="Source" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="Select the tl folder inside your game's game folder." FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,16" />
+                <TextBlock Text="Translation folder" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" />
+                <TextBox Text="{Binding SourceTlPath, Mode=OneWay}" IsReadOnly="True" Style="{StaticResource FluentTextBox}" Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource GroupBoxBorderBrush}" BorderThickness="1" Padding="10,8" FontSize="11" TextWrapping="Wrap" />
+                <Button Content="Choose folder" Command="{Binding BrowseTlCommand}" Style="{StaticResource FluentSecondaryButton}" HorizontalAlignment="Left" Margin="0,10,0,0" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" />
+                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,16" />
+                <TextBlock Text="Game" FontSize="12" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding DetectedGame}" FontSize="13" Margin="0,4,0,0" />
+                <TextBlock Text="Output" FontSize="12" FontWeight="SemiBold" Margin="0,14,0,0" />
+                <TextBlock Text="{Binding OutputPreview}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+              </StackPanel>
+            </Border>
 
-      <Grid Grid.Row="0" Margin="0,4,0,16">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <StackPanel Grid.Column="0">
-          <TextBlock Text="{Binding StatusTitle}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding StatusSubtitle}" Margin="0,4,0,0" Foreground="{DynamicResource TextMutedBrush}"
-                     FontSize="13" TextWrapping="Wrap" />
-        </StackPanel>
-        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-          <Button Content="Resume" Command="{Binding ResumeCommand}" Style="{StaticResource FluentSecondaryButton}"
-                  Margin="0,0,8,0" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" />
-          <Button Command="{Binding TranslateCommand}" Style="{StaticResource FluentPrimaryButton}"
-                  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" Padding="20,12" MinWidth="132">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="▶" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"
-                         Foreground="{DynamicResource AccentOnAccentBrush}" />
-              <TextBlock Text="Translate" VerticalAlignment="Center"
-                         Foreground="{DynamicResource AccentOnAccentBrush}" FontWeight="SemiBold" />
-            </StackPanel>
-          </Button>
-          <Button Content="Cancel" Command="{Binding CancelRunCommand}" Style="{StaticResource FluentDangerOutlineButton}"
-                  Margin="8,0,0,0" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
-        </StackPanel>
-      </Grid>
+            <Border Style="{StaticResource SectionCard}">
+              <StackPanel>
+                <TextBlock Text="Translation settings" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="These settings apply to every selected language." FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,16" />
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Text="Source language" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" /><TextBox Text="{Binding SourceIso, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FluentTextBox}" Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource GroupBoxBorderBrush}" BorderThickness="1" Padding="10,8" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" /></StackPanel>
+                  <StackPanel Grid.Column="2"><TextBlock Text="Workers" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" /><TextBox Text="{Binding WorkersText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FluentTextBox}" Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource GroupBoxBorderBrush}" BorderThickness="1" Padding="10,8" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" /></StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
 
-      <Border Grid.Row="1" Background="{DynamicResource CardBackgroundBrush}"
-              BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16,14"
-              Margin="0,0,0,16">
-        <Grid>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-          </Grid.RowDefinitions>
-          <Grid Grid.Row="0" Margin="0,0,0,8">
-            <TextBlock Text="{Binding StatusTitle}" FontWeight="SemiBold" VerticalAlignment="Center"
-                       HorizontalAlignment="Left" />
-            <TextBlock Text="{Binding StatusSubtitle}" FontWeight="SemiBold" VerticalAlignment="Center"
-                       HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" />
-          </Grid>
-          <ProgressBar Grid.Row="1" Style="{StaticResource FluentProgressBar}"
-                       Maximum="{Binding ProgressMaximum}" Value="{Binding ProgressValue}" Margin="0,0,0,8" />
-          <TextBlock Grid.Row="2" Text="Last file" Foreground="{DynamicResource TextMutedBrush}" FontSize="11"
-                     Margin="0,0,0,2" />
-          <TextBlock Grid.Row="3" Text="{Binding LastFile}" TextWrapping="Wrap" FontSize="12" />
+        <Grid Grid.Column="2"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+          <Border Grid.Row="0" Style="{StaticResource SectionCard}" Margin="0,0,0,16">
+            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="1" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+              <Grid Grid.Row="0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel><TextBlock Text="Target languages" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Choose one or more language folders to fill." FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" /></StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding StatusSubtitle}" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+              </Grid>
+              <Border Grid.Row="1" Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,16,0,12" />
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MaxHeight="230" Margin="0,12,0,0">
+              <ItemsControl ItemsSource="{Binding LanguageOptions}"><ItemsControl.ItemTemplate><DataTemplate DataType="{x:Type local:LanguageOptionViewModel}">
+                <Grid Margin="0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                  <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InvertBool}}" Style="{StaticResource FluentCheckBox}"><TextBlock Text="{Binding FolderName}" FontSize="12.5" /></CheckBox>
+                  <TextBlock Grid.Column="1" Text="{Binding IsoLabel}" FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+                </Grid>
+              </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+            </ScrollViewer>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="1" Style="{StaticResource SectionCard}" Margin="0,0,0,16">
+            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+              <Grid Grid.Row="0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel><TextBlock Text="{Binding StatusTitle}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="{Binding LastFile}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0" /></StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Button Content="Resume" Command="{Binding ResumeCommand}" Style="{StaticResource FluentSecondaryButton}" Margin="0,0,8,0" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" /><Button Content="Translate" Command="{Binding TranslateCommand}" Style="{StaticResource FluentPrimaryButton}" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" /><Button Content="Cancel" Command="{Binding CancelRunCommand}" Style="{StaticResource FluentDangerOutlineButton}" Margin="8,0,0,0" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" /></StackPanel>
+              </Grid>
+              <ProgressBar Grid.Row="1" Maximum="{Binding ProgressMaximum}" Value="{Binding ProgressValue}" Style="{StaticResource FluentProgressBar}" Margin="0,16,0,0" />
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="2" Style="{StaticResource SectionCard}" Padding="16">
+            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+              <TextBlock Text="Activity" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12" />
+              <ListBox Grid.Row="1" x:Name="LogListBox" ItemsSource="{Binding LogLines}" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True" ItemContainerStyle="{StaticResource LogListBoxItem}" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"><ListBox.ItemsPanel><ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate></ListBox.ItemsPanel></ListBox>
+            </Grid>
+          </Border>
         </Grid>
-      </Border>
-
-      <Border Grid.Row="2" Background="{DynamicResource LogBackgroundBrush}"
-              BorderBrush="{DynamicResource GroupBoxBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8">
-        <ListBox x:Name="LogListBox" ItemsSource="{Binding LogLines}" BorderThickness="0" Background="Transparent"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
-                 ItemContainerStyle="{StaticResource LogListBoxItem}" VirtualizingPanel.IsVirtualizing="True"
-                 VirtualizingPanel.VirtualizationMode="Recycling">
-          <ListBox.ItemsPanel>
-            <ItemsPanelTemplate>
-              <VirtualizingStackPanel />
-            </ItemsPanelTemplate>
-          </ListBox.ItemsPanel>
-        </ListBox>
-      </Border>
-
-      <Grid Grid.Row="3" Margin="0,12,0,0">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <StackPanel Grid.Column="0" Orientation="Horizontal">
-          <Button Content="Open output" Command="{Binding OpenOutputFolderCommand}" Style="{StaticResource FluentLinkButton}"
-                  Margin="0,0,16,0" />
-          <Button Content="Open logs" Command="{Binding OpenLogsFolderCommand}" Style="{StaticResource FluentLinkButton}" />
-        </StackPanel>
-        <TextBlock Grid.Column="1" Text="{Binding ThemeDisplayLabel}" Foreground="{DynamicResource TextMutedBrush}"
-                   FontSize="11" VerticalAlignment="Center" />
       </Grid>
+      <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,18,0,0"><Button Content="Open output folder" Command="{Binding OpenOutputFolderCommand}" Style="{StaticResource FluentLinkButton}" Margin="0,0,18,0" /><Button Content="Open logs folder" Command="{Binding OpenLogsFolderCommand}" Style="{StaticResource FluentLinkButton}" /></StackPanel>
     </Grid>
   </Grid>
 </Window>

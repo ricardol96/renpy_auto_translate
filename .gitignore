@@ -26,6 +26,9 @@ project.fragment.lock.json
 **/logs/
 *.log
 
+# Local web-research cache
+.firecrawl/
+
 # Local archives / repackaging
 *.zip
 
