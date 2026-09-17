@@ -12,7 +12,7 @@ public class RenpyInterpolationProtectorTests
         Assert.Single(originals);
         Assert.Equal("[pcname]", originals[0]);
         Assert.DoesNotContain("[pcname]", masked);
-        Assert.Contains("__RPY_0000__", masked);
+        Assert.NotEqual(src, masked);
 
         var fakeRu = masked.Replace("So, we should make out. Right,", "Итак, нам следует разобраться. Верно,");
         var restored = RenpyInterpolationProtector.UnmaskBracketInterpolations(fakeRu, originals);

@@ -1,0 +1,53 @@
+# Builds and publishes RenPyAutoTranslate.exe on version tags (v*).
+# Non-devs download from GitHub Releases — exe is gitignored in repo.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: dotnet
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Test (Core)
+        run: dotnet test RenPyAutoTranslate.Core.Tests/RenPyAutoTranslate.Core.Tests.csproj -c Release --verbosity minimal
+
+      - name: Publish (framework-dependent, small)
+        shell: pwsh
+        run: |
+          ./publish-framework-dependent.ps1
+          Copy-Item ../RenPyAutoTranslate.exe "../RenPyAutoTranslate-${{ github.ref_name }}-win-x64-framework-dependent.exe" -Force
+
+      - name: Publish (self-contained win-x64)
+        shell: pwsh
+        run: |
+          ./publish.ps1
+          Copy-Item ../RenPyAutoTranslate.exe "../RenPyAutoTranslate-${{ github.ref_name }}-win-x64-self-contained.exe" -Force
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ../RenPyAutoTranslate.exe
+            ../RenPyAutoTranslate-*-self-contained.exe
+            ../RenPyAutoTranslate-*-framework-dependent.exe
+          fail_on_unmatched_files: false
+          generate_release_notes: true

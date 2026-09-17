@@ -69,6 +69,10 @@ public sealed class TranslationCoordinator
                     progress?.Report(new TranslationProgress(c, total, task.RelativePath));
                     Log("INFO", $"[{c}/{total}] OK {task.RelativePath.Replace('\\', '/')}");
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch (Exception exc)
                 {
                     Interlocked.Increment(ref failCount);
@@ -103,7 +107,7 @@ public sealed class TranslationCoordinator
                 await _translator
                     .TranslateFileAsync(origin, tlRoot, outputRoot, fromL, toL, ct)
                     .ConfigureAwait(false);
-                limiter.RecordSuccess();
+                await limiter.RecordSuccessAsync(ct).ConfigureAwait(false);
                 return;
             }
             catch (Exception exc) when (exc is HttpRequestException or TaskCanceledException or IOException
@@ -122,7 +126,7 @@ public sealed class TranslationCoordinator
             if (attempt < maxRetries)
             {
                 if (last is not null && TranslationErrorClassifier.IsRateLimitError(last))
-                    limiter.RecordThrottle();
+                    await limiter.RecordThrottleAsync(ct).ConfigureAwait(false);
                 var delay = baseDelaySec * Math.Pow(2, attempt) + Random.Shared.NextDouble() * 0.25;
                 await Task.Delay(TimeSpan.FromSeconds(delay), ct).ConfigureAwait(false);
             }

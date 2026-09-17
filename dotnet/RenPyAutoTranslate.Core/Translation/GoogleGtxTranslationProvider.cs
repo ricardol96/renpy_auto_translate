@@ -28,9 +28,12 @@ public sealed class GoogleGtxTranslationProvider : ITranslationProvider, IDispos
             return text;
         var url =
             "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t" +
-            $"&sl={Uri.EscapeDataString(sourceLang)}&tl={Uri.EscapeDataString(targetLang)}" +
-            $"&q={Uri.EscapeDataString(text)}";
-        using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+            $"&sl={Uri.EscapeDataString(sourceLang)}&tl={Uri.EscapeDataString(targetLang)}";
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["q"] = text
+        });
+        using var response = await _http.PostAsync(url, content, cancellationToken)
             .ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.TooManyRequests)
             throw new HttpRequestException("429 Too Many Requests", null, HttpStatusCode.TooManyRequests);

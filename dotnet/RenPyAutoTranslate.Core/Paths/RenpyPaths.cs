@@ -8,6 +8,39 @@ public static class RenpyPaths
     public static string ToolRepoRootFromBaseDirectory(string? baseDirectory = null)
     {
         baseDirectory ??= AppContext.BaseDirectory;
+
+        // Single-file publish extracts to a temp folder like
+        // C:\Users\...\AppData\Local\Temp\.net\RenPyAutoTranslate\...
+        // In that case the exe lives next to the publish output, not the extraction dir.
+        // Prefer the directory of the running executable when it differs.
+        var exePath = Environment.ProcessPath;
+        if (!string.IsNullOrEmpty(exePath))
+        {
+            var exeDir = Path.GetDirectoryName(Path.GetFullPath(exePath));
+            if (!string.IsNullOrEmpty(exeDir) && Directory.Exists(exeDir))
+            {
+                // If AppContext.BaseDirectory looks like a temp extraction path, use exe dir.
+                var baseDirNorm = Path.GetFullPath(baseDirectory).TrimEnd(Path.DirectorySeparatorChar);
+                if (baseDirNorm.Contains(".net", StringComparison.OrdinalIgnoreCase)
+                    || baseDirNorm.Contains(Path.Combine("Temp", ""), StringComparison.OrdinalIgnoreCase))
+                {
+                    return exeDir;
+                }
+                // If exe is in repo root (publish output) and base is nested, prefer exe dir.
+                var exeFileName = Path.GetFileName(exePath);
+                if (exeFileName.StartsWith("RenPyAutoTranslate", StringComparison.OrdinalIgnoreCase))
+                {
+                    // When running from dotnet run (bin/Release/...), keep baseDirectory behavior
+                    // for dev; otherwise deployed exe dir is authoritative.
+                    if (!baseDirNorm.Contains(Path.Combine("dotnet", ""), StringComparison.OrdinalIgnoreCase)
+                        && !baseDirNorm.Contains(Path.Combine("bin", ""), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return exeDir;
+                    }
+                }
+            }
+        }
+
         var dir = Path.GetFullPath(baseDirectory.TrimEnd(Path.DirectorySeparatorChar));
         var name = Path.GetFileName(dir);
         if (string.Equals(name, "src", StringComparison.OrdinalIgnoreCase))

@@ -27,6 +27,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _outputPreview = "—";
     [ObservableProperty] private string _sourceIso = "en";
     [ObservableProperty] private int _workers = 4;
+    [ObservableProperty] private string _workersText = "4";
     [ObservableProperty] private string _lastFile = "";
     [ObservableProperty] private double _progressMaximum = 1;
     [ObservableProperty] private double _progressValue;
@@ -46,6 +47,23 @@ public partial class MainViewModel : ObservableObject
         AppTheme.Light => "Light · Fluent",
         _ => "System · Fluent"
     };
+
+    partial void OnWorkersChanged(int value)
+    {
+        var s = value.ToString();
+        if (!string.Equals(WorkersText, s, StringComparison.Ordinal))
+            WorkersText = s;
+    }
+
+    partial void OnWorkersTextChanged(string value)
+    {
+        if (int.TryParse(value, out var parsed))
+        {
+            parsed = Math.Clamp(parsed, 1, 16);
+            if (Workers != parsed)
+                Workers = parsed;
+        }
+    }
 
     partial void OnUiThemeChanged(AppTheme value)
     {
@@ -74,6 +92,7 @@ public partial class MainViewModel : ObservableObject
         SourceTlPath = s.LastSourceTlPath ?? "";
         SourceIso = s.SourceLanguageIso;
         Workers = Math.Clamp(s.Workers, 1, 16);
+        WorkersText = Workers.ToString();
         UiTheme = s.Theme;
         if (!string.IsNullOrEmpty(SourceTlPath) && Directory.Exists(SourceTlPath))
         {

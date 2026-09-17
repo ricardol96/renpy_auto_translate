@@ -116,7 +116,16 @@ public sealed class RenpyFileTranslator
                 }
             }
 
-            File.Move(tmpPath, outPath, overwrite: true);
+            try
+            {
+                File.Move(tmpPath, outPath, overwrite: true);
+            }
+            catch (IOException) when (!string.Equals(Path.GetPathRoot(tmpPath), Path.GetPathRoot(outPath), StringComparison.OrdinalIgnoreCase))
+            {
+                // Cross-volume move fails; fallback to copy+delete.
+                File.Copy(tmpPath, outPath, overwrite: true);
+                File.Delete(tmpPath);
+            }
         }
         catch
         {

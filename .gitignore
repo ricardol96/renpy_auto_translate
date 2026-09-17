@@ -31,6 +31,8 @@ project.fragment.lock.json
 
 # Publish output at repo root (dotnet publish)
 /publish/
+# Self-contained single-file publish at repo root (>100MB, do not commit)
+/RenPyAutoTranslate.exe
 
 # Python (legacy tooling)
 __pycache__/

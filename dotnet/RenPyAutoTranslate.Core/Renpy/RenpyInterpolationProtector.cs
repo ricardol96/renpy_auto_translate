@@ -6,8 +6,12 @@ namespace RenPyAutoTranslate.Core.Renpy;
 /// </summary>
 public static class RenpyInterpolationProtector
 {
+    /// <summary>Token uses private-use unicode to avoid collision with real dialogue.</summary>
+    private const string TokenPrefix = "\uE000RPY_";
+    private const string TokenSuffix = "_\uE001";
+
     /// <summary>Token format; fixed width index avoids <c>__RPY_1__</c> matching inside <c>__RPY_10__</c>.</summary>
-    private static string Token(int k) => $"__RPY_{k:D4}__";
+    private static string Token(int k) => $"{TokenPrefix}{k:D4}{TokenSuffix}";
 
     /// <summary>
     /// Finds non-overlapping spans of balanced square brackets. Nested <c>[[ ... ]]</c> is one span.

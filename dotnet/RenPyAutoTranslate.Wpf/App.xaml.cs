@@ -12,7 +12,7 @@ public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
@@ -23,7 +23,7 @@ public partial class App : Application
         Services = services.BuildServiceProvider();
 
         var settingsStore = Services.GetRequiredService<ISettingsStore>();
-        var settings = settingsStore.LoadAsync().GetAwaiter().GetResult();
+        var settings = await settingsStore.LoadAsync().ConfigureAwait(true);
         ThemeApplier.Apply(settings.Theme);
 
         var toolRoot = RenpyPaths.ToolRepoRootFromBaseDirectory();

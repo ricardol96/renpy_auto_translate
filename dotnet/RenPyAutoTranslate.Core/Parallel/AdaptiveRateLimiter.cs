@@ -47,9 +47,9 @@ public sealed class AdaptiveRateLimiter
         }
     }
 
-    public void RecordSuccess()
+    public async Task RecordSuccessAsync(CancellationToken cancellationToken = default)
     {
-        _mutex.Wait();
+        await _mutex.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             if (_interval <= 0)
@@ -64,9 +64,9 @@ public sealed class AdaptiveRateLimiter
         }
     }
 
-    public void RecordThrottle()
+    public async Task RecordThrottleAsync(CancellationToken cancellationToken = default)
     {
-        _mutex.Wait();
+        await _mutex.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var old = _interval;
@@ -85,4 +85,8 @@ public sealed class AdaptiveRateLimiter
             _mutex.Release();
         }
     }
+
+    public void RecordSuccess() => RecordSuccessAsync().GetAwaiter().GetResult();
+
+    public void RecordThrottle() => RecordThrottleAsync().GetAwaiter().GetResult();
 }

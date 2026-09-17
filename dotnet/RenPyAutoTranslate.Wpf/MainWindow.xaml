@@ -218,7 +218,7 @@
             <TextBlock Text="Workers" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" Margin="0,0,0,4" />
             <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource GroupBoxBorderBrush}"
                     BorderThickness="1" CornerRadius="8">
-              <TextBox Text="{Binding Workers, UpdateSourceTrigger=PropertyChanged}"
+              <TextBox Text="{Binding WorkersText, UpdateSourceTrigger=PropertyChanged}"
                        BorderThickness="0" Background="Transparent" Padding="10,8"
                        Style="{StaticResource FluentTextBox}"
                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBool}}" />

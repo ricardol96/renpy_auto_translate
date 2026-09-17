@@ -12,12 +12,16 @@ A small Windows program that reads your Ren’Py translation files, sends the te
 
 ---
 
-## How to open the program
+## Download (non-developers)
 
-**If someone gave you `RenPyAutoTranslate.exe`:**  
-Double-click it (you can keep it on its own).
+Go to **Releases** on GitHub (right sidebar / `https://github.com/ricardol96/renpy_auto_translate/releases`), download **`RenPyAutoTranslate.exe`** from the latest release (`v0.1` and up), and double-click it. No install needed. No need to clone the repo.
 
-**If you only have this source project and need to create the program yourself:**  
+> Large download (~100–150 MB) — this is the self-contained build with .NET included. A smaller framework-dependent build is also attached to each release if you have the [.NET 8 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/8.0) installed.
+
+## How to open the program (developers)
+
+If you clone this repo, `RenPyAutoTranslate.exe` is **not** included (gitignored — see `dotnet/DEVELOPER.md`). Build it yourself:
+
 Install Microsoft’s **.NET 8** developer tools (free), open the **`dotnet`** folder inside this project, and run **`publish.ps1`**. When it finishes, **`RenPyAutoTranslate.exe`** appears at the **top level of the project** (next to this readme). Double-click it to run. The first build can take a few minutes; later builds are quicker.
 
 ---

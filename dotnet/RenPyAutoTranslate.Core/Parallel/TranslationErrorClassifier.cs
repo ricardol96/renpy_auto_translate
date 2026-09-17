@@ -11,11 +11,21 @@ public static class TranslationErrorClassifier
     {
         if (exc is HttpRequestException h && h.StatusCode == HttpStatusCode.TooManyRequests)
             return true;
-        var msg = exc.Message.ToLowerInvariant();
-        return msg.Contains("429")
-               || msg.Contains("too many")
-               || msg.Contains("rate limit")
-               || msg.Contains("quota");
+        // Only inspect HTTP-level messages; avoid matching user dialogue content.
+        if (exc is TranslationResponseException)
+        {
+            var msg = exc.Message.ToLowerInvariant();
+            return msg.Contains("429") || msg.Contains("too many") || msg.Contains("rate limit") || msg.Contains("quota");
+        }
+        if (exc is HttpRequestException or HttpIOException)
+        {
+            var msg = exc.Message.ToLowerInvariant();
+            return msg.Contains("429")
+                   || msg.Contains("too many")
+                   || msg.Contains("rate limit")
+                   || msg.Contains("quota");
+        }
+        return false;
     }
 
     public static bool IsRetriableException(Exception exc)
@@ -26,10 +36,8 @@ public static class TranslationErrorClassifier
             return true;
         if (exc is TranslationResponseException)
             return true;
-        var msg = exc.Message.ToLowerInvariant();
-        return msg.Contains("429")
-               || msg.Contains("too many")
-               || msg.Contains("timeout")
-               || msg.Contains("connection");
+        // Do not fallback to message sniffing for non-network exceptions (e.g. RenpyLineFillException)
+        // to avoid misclassifying user content.
+        return false;
     }
 }

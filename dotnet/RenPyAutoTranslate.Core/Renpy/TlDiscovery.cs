@@ -49,7 +49,7 @@ public static class TlDiscovery
                 continue;
             }
 
-            if (inPlace && RpyHasUnfilledEmptyNewStrings(origin))
+            if (inPlace && RpyHasUnfilledEmptyNewStrings(outPath))
                 missing.Add(origin);
         }
 
@@ -81,6 +81,10 @@ public static class TlDiscovery
     /// <summary>Mirror directory structure without files (Ren'Py empty TL tree).</summary>
     public static void CopyEmptyLanguageTree(string srcLangDir, string dstLangDir)
     {
+        srcLangDir = Path.GetFullPath(srcLangDir);
+        dstLangDir = Path.GetFullPath(dstLangDir);
+        if (RenpyPaths.PathsEqualCaseInsensitive(srcLangDir, dstLangDir))
+            return;
         if (Directory.Exists(dstLangDir))
             Directory.Delete(dstLangDir, recursive: true);
         Directory.CreateDirectory(dstLangDir);
