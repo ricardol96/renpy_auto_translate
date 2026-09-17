@@ -46,8 +46,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ../RenPyAutoTranslate.exe
-            ../RenPyAutoTranslate-*-self-contained.exe
-            ../RenPyAutoTranslate-*-framework-dependent.exe
-          fail_on_unmatched_files: false
+            RenPyAutoTranslate.exe
+            RenPyAutoTranslate-*-self-contained.exe
+            RenPyAutoTranslate-*-framework-dependent.exe
+          fail_on_unmatched_files: true
           generate_release_notes: true
